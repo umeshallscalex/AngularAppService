@@ -28,9 +28,13 @@ export class App {
   isSubmittingAuth = false;
   isLoggingOut = false;
   activeTab: 'employee' | 'department' | 'student' | 'employee-search' = 'employee';
-  employeeDetails: EmployeeDetails = {
-    departmentID: 0,
-    empId: 0,
+  employeeDetails: {
+    departmentID: number | null;
+    empId: number | null;
+    empName: string;
+  } = {
+    departmentID: null,
+    empId: null,
     empName: '',
   };
   employees: EmployeeDetails[] | null = null;
@@ -44,18 +48,25 @@ export class App {
   employeeDeleteErrorMessage = '';
   employeeServiceUnavailable = false;
   private employeeLoadRequestId = 0;
-  departmentDetails: DepartmentDetails = {
-    departmentID: 0,
+  departmentDetails: {
+    departmentID: number | null;
+    departmentName: string;
+  } = {
+    departmentID: null,
     departmentName: '',
   };
   departments: DepartmentDetails[] | null = null;
   isLoadingDepartments = false;
   departmentsErrorMessage = '';
   private departmentLoadRequestId = 0;
-  studentDetails: StudentDetails = {
-    studentId: 0,
+  studentDetails: {
+    studentId: number | null;
+    studentName: string;
+    departmentId: number | null;
+  } = {
+    studentId: null,
     studentName: '',
-    departmentId: 0,
+    departmentId: null,
   };
   students: StudentRecord[] | null = null;
   isLoadingStudents = false;
@@ -233,7 +244,12 @@ export class App {
   }
 
   addEmployee(form: NgForm): void {
-    if (form.invalid || this.isSubmittingEmployee) {
+    if (
+      form.invalid ||
+      this.isSubmittingEmployee ||
+      this.employeeDetails.departmentID === null ||
+      this.employeeDetails.empId === null
+    ) {
       return;
     }
 
@@ -241,22 +257,28 @@ export class App {
     this.employeeErrorMessage = '';
     this.employeeSuccessMessage = '';
 
-    this.employeeService.addEmployee(this.employeeDetails).subscribe({
-      next: () => {
-        this.employeeSuccessMessage = 'Employee added successfully.';
-        this.employeeDetails = { departmentID: 0, empId: 0, empName: '' };
-        form.resetForm(this.employeeDetails);
-        this.isSubmittingEmployee = false;
-        this.loadEmployees(true);
-      },
-      error: (error: unknown) => {
-        this.employeeErrorMessage =
-          error instanceof HttpErrorResponse
-            ? `Could not add employee: ${error.message}`
-            : 'Could not add employee. Please try again.';
-        this.isSubmittingEmployee = false;
-      },
-    });
+    this.employeeService
+      .addEmployee({
+        ...this.employeeDetails,
+        departmentID: this.employeeDetails.departmentID,
+        empId: this.employeeDetails.empId,
+      })
+      .subscribe({
+        next: () => {
+          this.employeeSuccessMessage = 'Employee added successfully.';
+          this.employeeDetails = { departmentID: null, empId: null, empName: '' };
+          form.resetForm(this.employeeDetails);
+          this.isSubmittingEmployee = false;
+          this.loadEmployees(true);
+        },
+        error: (error: unknown) => {
+          this.employeeErrorMessage =
+            error instanceof HttpErrorResponse
+              ? `Could not add employee: ${error.message}`
+              : 'Could not add employee. Please try again.';
+          this.isSubmittingEmployee = false;
+        },
+      });
   }
 
   loadEmployees(force = false): void {
@@ -375,7 +397,11 @@ export class App {
   }
 
   addDepartment(form: NgForm): void {
-    if (form.invalid || this.isSubmittingDepartment) {
+    if (
+      form.invalid ||
+      this.isSubmittingDepartment ||
+      this.departmentDetails.departmentID === null
+    ) {
       return;
     }
 
@@ -383,26 +409,36 @@ export class App {
     this.departmentErrorMessage = '';
     this.departmentSuccessMessage = '';
 
-    this.departmentService.addDepartment(this.departmentDetails).subscribe({
-      next: () => {
-        this.departmentSuccessMessage = 'Department added successfully.';
-        this.departmentDetails = { departmentID: 0, departmentName: '' };
-        form.resetForm(this.departmentDetails);
-        this.isSubmittingDepartment = false;
-        this.loadDepartments(true);
-      },
-      error: (error: unknown) => {
-        this.departmentErrorMessage =
-          error instanceof HttpErrorResponse
-            ? `Could not add department: ${error.message}`
-            : 'Could not add department. Please try again.';
-        this.isSubmittingDepartment = false;
-      },
-    });
+    this.departmentService
+      .addDepartment({
+        ...this.departmentDetails,
+        departmentID: this.departmentDetails.departmentID,
+      })
+      .subscribe({
+        next: () => {
+          this.departmentSuccessMessage = 'Department added successfully.';
+          this.departmentDetails = { departmentID: null, departmentName: '' };
+          form.resetForm(this.departmentDetails);
+          this.isSubmittingDepartment = false;
+          this.loadDepartments(true);
+        },
+        error: (error: unknown) => {
+          this.departmentErrorMessage =
+            error instanceof HttpErrorResponse
+              ? `Could not add department: ${error.message}`
+              : 'Could not add department. Please try again.';
+          this.isSubmittingDepartment = false;
+        },
+      });
   }
 
   addStudent(form: NgForm): void {
-    if (form.invalid || this.isSubmittingStudent) {
+    if (
+      form.invalid ||
+      this.isSubmittingStudent ||
+      this.studentDetails.studentId === null ||
+      this.studentDetails.departmentId === null
+    ) {
       return;
     }
 
@@ -410,22 +446,32 @@ export class App {
     this.studentErrorMessage = '';
     this.studentSuccessMessage = '';
 
-    this.studentService.addStudent(this.studentDetails).subscribe({
-      next: () => {
-        this.studentSuccessMessage = 'Student added successfully.';
-        this.studentDetails = { studentId: 0, studentName: '', departmentId: 0 };
-        form.resetForm(this.studentDetails);
-        this.isSubmittingStudent = false;
-        this.loadStudents(true);
-      },
-      error: (error: unknown) => {
-        this.studentErrorMessage =
-          error instanceof HttpErrorResponse
-            ? `Could not add student: ${error.message}`
-            : 'Could not add student. Please try again.';
-        this.isSubmittingStudent = false;
-      },
-    });
+    this.studentService
+      .addStudent({
+        ...this.studentDetails,
+        studentId: this.studentDetails.studentId,
+        departmentId: this.studentDetails.departmentId,
+      })
+      .subscribe({
+        next: () => {
+          this.studentSuccessMessage = 'Student added successfully.';
+          this.studentDetails = {
+            studentId: null,
+            studentName: '',
+            departmentId: null,
+          };
+          form.resetForm(this.studentDetails);
+          this.isSubmittingStudent = false;
+          this.loadStudents(true);
+        },
+        error: (error: unknown) => {
+          this.studentErrorMessage =
+            error instanceof HttpErrorResponse
+              ? `Could not add student: ${error.message}`
+              : 'Could not add student. Please try again.';
+          this.isSubmittingStudent = false;
+        },
+      });
   }
 
   openDepartmentTab(): void {
