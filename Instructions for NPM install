@@ -1,0 +1,23 @@
+Step 1: Install Node.js
+If you haven't installed Node.js yet:
+
+Go to the official Node.js Website.
+https://nodejs.org/en
+Download and run the LTS (Long Term Support) installer.
+
+Important for Windows users: Make sure to go through the installer steps and check the option that says "Automatically install the necessary tools" or ensure "Add to PATH" is enabled.
+npm install
+node -v
+npm -v
+npm install -g @angular/cli
+
+run
+---------------------
+Method 1: Allow PowerShell Scripts (Recommended)You can update your PowerShell execution policy for your user account so it allows running scripts:
+Open PowerShell.
+Run the following command:PowerShell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+ng serve or npm start (Start Angular application)
+
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
