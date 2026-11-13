@@ -1,10 +1,97 @@
-<main class="page">
-  <section class="card" aria-labelledby="page-title">
-    <header class="card-header">
-      <p class="eyebrow">EMPLOYEE MANAGEMENT</p>
-      <h1 id="page-title">Manage records</h1>
-      <p class="intro">Add and search employees, departments, and students.</p>
+<main
+  class="page"
+  [class.auth-page]="authStatus !== 'authenticated'"
+  [class.home-page]="authStatus === 'authenticated'"
+>
+  @if (authStatus === 'checking') {
+    <section class="card auth-card" aria-live="polite">
+      <p class="message" role="status">Checking your session…</p>
+    </section>
+  } @else if (authStatus === 'unauthenticated') {
+    <section class="card auth-card" aria-labelledby="auth-title">
+      <header class="card-header">
+        <p class="eyebrow">BEC COLLEGE MANAGEMENT SYSTEM</p>
+        <h1 id="auth-title">{{ authMode === 'login' ? 'Welcome to BEC College Management System' : 'Create your account' }}</h1>
+        <p class="intro">
+          {{ authMode === 'login' ? 'Sign in to manage all college records.' : 'Register to get started.' }}
+        </p>
+      </header>
+
+      <form #authForm="ngForm" (ngSubmit)="submitAuth(authForm)">
+        <label for="authUsername">Username</label>
+        <input
+          id="authUsername"
+          name="username"
+          type="text"
+          autocomplete="username"
+          required
+          [(ngModel)]="authCredentials.username"
+        />
+
+        <label for="authPassword">Password</label>
+        <input
+          id="authPassword"
+          name="password"
+          type="password"
+          [attr.autocomplete]="authMode === 'login' ? 'current-password' : 'new-password'"
+          required
+          [(ngModel)]="authCredentials.password"
+        />
+
+        @if (authErrorMessage) {
+          <p class="message error" role="alert">{{ authErrorMessage }}</p>
+        }
+        @if (authSuccessMessage) {
+          <p class="message success" role="status">{{ authSuccessMessage }}</p>
+        }
+
+        <button type="submit" [disabled]="authForm.invalid || isSubmittingAuth">
+          {{
+            isSubmittingAuth
+              ? (authMode === 'login' ? 'Signing in…' : 'Registering…')
+              : (authMode === 'login' ? 'Sign in' : 'Register')
+          }}
+        </button>
+      </form>
+
+      <p class="auth-switch">
+        {{ authMode === 'login' ? 'New here?' : 'Already registered?' }}
+        <button
+          type="button"
+          class="tab text-button"
+          [disabled]="isSubmittingAuth"
+          (click)="setAuthMode(authMode === 'login' ? 'register' : 'login')"
+        >
+          {{ authMode === 'login' ? 'Create an account' : 'Sign in' }}
+        </button>
+      </p>
+    </section>
+  } @else {
+  <section class="card home-dashboard" aria-labelledby="page-title">
+    <header class="card-header home-header">
+      <div class="account-bar">
+        <span>Signed in as <strong>{{ username }}</strong></span>
+        <button
+          type="button"
+          class="refresh-button"
+          [disabled]="isLoggingOut"
+          (click)="logout()"
+        >
+          {{ isLoggingOut ? 'Signing out…' : 'Log out' }}
+        </button>
+      </div>
+      @if (authErrorMessage) {
+        <p class="message error" role="alert">{{ authErrorMessage }}</p>
+      }
     </header>
+
+    <section class="home-hero" aria-labelledby="page-title">
+      <div class="hero-copy">
+        <p class="eyebrow">BEC COLLEGE MANAGEMENT SYSTEM</p>
+        <h1 id="page-title">Manage records</h1>
+        <p class="intro">A brighter, simpler way to manage all college records.</p>
+      </div>
+    </section>
 
     <nav class="tabs" aria-label="Record type">
       <button
@@ -451,4 +538,5 @@
       }
     }
   </section>
+  }
 </main>

@@ -2,6 +2,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { isPlatformBrowser } from '@angular/common';
 import { ChangeDetectorRef, Component, Inject, PLATFORM_ID } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
+import { Router } from '@angular/router';
+import { AuthCredentials, AuthService } from './auth.service';
 import { DepartmentDetails, DepartmentService } from './department.service';
 import {
   EmployeeDetails,
@@ -17,6 +19,14 @@ import { StudentDetails, StudentRecord, StudentService } from './student.service
   templateUrl: './app.html',
 })
 export class App {
+  authStatus: 'checking' | 'authenticated' | 'unauthenticated' = 'checking';
+  authMode: 'login' | 'register' = 'login';
+  authCredentials: AuthCredentials = { username: '', password: '' };
+  username = '';
+  authErrorMessage = '';
+  authSuccessMessage = '';
+  isSubmittingAuth = false;
+  isLoggingOut = false;
   activeTab: 'employee' | 'department' | 'student' | 'employee-search' = 'employee';
   employeeDetails: EmployeeDetails = {
     departmentID: 0,
@@ -66,6 +76,8 @@ export class App {
   employeeSearchErrorMessage = '';
 
   constructor(
+    private readonly authService: AuthService,
+    private readonly router: Router,
     private readonly employeeService: EmployeeService,
     private readonly departmentService: DepartmentService,
     private readonly studentService: StudentService,
@@ -75,8 +87,149 @@ export class App {
 
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {
-      this.loadEmployees();
+      this.authMode = this.router.url.startsWith('/register') ? 'register' : 'login';
+      this.checkSession();
+    } else {
+      this.authStatus = 'unauthenticated';
     }
+  }
+
+  checkSession(): void {
+    this.authService.getSession().subscribe({
+      next: (session) => {
+        this.authStatus = session.authenticated
+          ? 'authenticated'
+          : 'unauthenticated';
+        this.username = session.username ?? '';
+        if (session.authenticated) {
+          this.router.navigateByUrl('/home');
+          this.loadEmployees();
+        } else if (this.router.url !== '/register') {
+          this.router.navigateByUrl('/login');
+        }
+        this.changeDetector.markForCheck();
+      },
+      error: (error: unknown) => {
+        this.authStatus = 'unauthenticated';
+        this.authErrorMessage = this.getAuthErrorMessage(
+          error,
+          'Could not verify your session. Please try again.',
+        );
+        this.router.navigateByUrl('/login');
+        this.changeDetector.markForCheck();
+      },
+    });
+  }
+
+  setAuthMode(mode: 'login' | 'register'): void {
+    if (this.isSubmittingAuth) {
+      return;
+    }
+
+    this.authMode = mode;
+    this.authErrorMessage = '';
+    this.authSuccessMessage = '';
+    this.router.navigateByUrl(`/${mode}`);
+  }
+
+  submitAuth(form: NgForm): void {
+    if (form.invalid || this.isSubmittingAuth) {
+      return;
+    }
+
+    this.isSubmittingAuth = true;
+    this.authErrorMessage = '';
+    this.authSuccessMessage = '';
+    const credentials = { ...this.authCredentials };
+
+    if (this.authMode === 'register') {
+      this.authService.register(credentials).subscribe({
+        next: (response) => {
+          this.isSubmittingAuth = false;
+          this.authMode = 'login';
+          this.authCredentials = { username: credentials.username, password: '' };
+          this.authSuccessMessage = response.message || 'Account created.';
+          this.router.navigateByUrl('/login');
+          this.changeDetector.markForCheck();
+        },
+        error: (error: unknown) => {
+          this.authErrorMessage = this.getAuthErrorMessage(
+            error,
+            'Could not create your account. Please try again.',
+          );
+          this.isSubmittingAuth = false;
+          this.changeDetector.markForCheck();
+        },
+      });
+      return;
+    }
+
+    this.authService.login(credentials).subscribe({
+      next: () => {
+        this.authService.getSession().subscribe({
+          next: (session) => {
+            this.isSubmittingAuth = false;
+            if (!session.authenticated) {
+              this.authStatus = 'unauthenticated';
+              this.authErrorMessage = 'Login was not confirmed by the server.';
+              this.changeDetector.markForCheck();
+              return;
+            }
+
+            this.username = session.username ?? credentials.username;
+            this.authCredentials = { username: this.username, password: '' };
+            this.authStatus = 'authenticated';
+            this.router.navigateByUrl('/home');
+            this.loadEmployees();
+            this.changeDetector.markForCheck();
+          },
+          error: (error: unknown) => {
+            this.isSubmittingAuth = false;
+            this.authErrorMessage = this.getAuthErrorMessage(
+              error,
+              'Login succeeded, but the session could not be verified.',
+            );
+            this.changeDetector.markForCheck();
+          },
+        });
+      },
+      error: (error: unknown) => {
+        this.authErrorMessage = this.getAuthErrorMessage(
+          error,
+          'Login failed. Check your username and password.',
+        );
+        this.isSubmittingAuth = false;
+        this.changeDetector.markForCheck();
+      },
+    });
+  }
+
+  logout(): void {
+    this.isLoggingOut = false;
+    this.authStatus = 'unauthenticated';
+    this.authMode = 'login';
+    this.authCredentials = { username: '', password: '' };
+    this.username = '';
+    this.employees = null;
+    this.authErrorMessage = '';
+    this.authSuccessMessage = '';
+    this.router.navigateByUrl('/login');
+    this.changeDetector.markForCheck();
+  }
+
+  private getAuthErrorMessage(error: unknown, fallback: string): string {
+    if (error instanceof HttpErrorResponse) {
+      const responseMessage =
+        typeof error.error === 'object' &&
+        error.error !== null &&
+        'message' in error.error &&
+        typeof error.error.message === 'string'
+          ? error.error.message
+          : '';
+      return responseMessage || `${fallback} (HTTP ${error.status})`;
+    }
+
+    return fallback;
   }
 
   addEmployee(form: NgForm): void {

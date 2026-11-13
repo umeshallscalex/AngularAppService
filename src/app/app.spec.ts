@@ -3,18 +3,30 @@ import { provideHttpClient } from '@angular/common/http';
 import {
   HttpTestingController,
   provideHttpClientTesting,
+  TestRequest,
 } from '@angular/common/http/testing';
 import { ComponentFixture } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { NgForm } from '@angular/forms';
 import { App } from './app';
+import { routes } from './app.routes';
+
+function initializeAuthenticatedApp(
+  fixture: ComponentFixture<App>,
+): TestRequest {
+  fixture.detectChanges();
+
+  const http = TestBed.inject(HttpTestingController);
+  const sessionRequest = http.expectOne('/EmployeeService/api/auth/session');
+  expect(sessionRequest.request.method).toBe('GET');
+  sessionRequest.flush({ authenticated: true, username: 'test-user' });
+
+  return http.expectOne('/EmployeeService/getEmpDetails');
+}
 
 function createAppFixture(): ComponentFixture<App> {
   const fixture = TestBed.createComponent(App);
-  fixture.detectChanges();
-
-  const request = TestBed.inject(HttpTestingController).expectOne(
-    '/EmployeeService/getEmpDetails',
-  );
-  expect(request.request.method).toBe('GET');
+  const request = initializeAuthenticatedApp(fixture);
   request.flush([]);
   fixture.detectChanges();
   return fixture;
@@ -24,9 +36,12 @@ describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
-    })
-      .compileComponents();
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter(routes),
+      ],
+    }).compileComponents();
   });
 
   afterEach(() => {
@@ -46,13 +61,90 @@ describe('App', () => {
     expect(compiled.querySelector('h1')?.textContent).toContain('Manage records');
   });
 
-  it('should show a helpful message and retry when employee service is unavailable', () => {
+  it('should register an account and return to the login form', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne('/EmployeeService/api/auth/session').flush({
+      authenticated: false,
+      username: null,
+    });
+    fixture.detectChanges();
 
-    const request = TestBed.inject(HttpTestingController).expectOne(
-      '/EmployeeService/getEmpDetails',
+    const app = fixture.componentInstance;
+    app.setAuthMode('register');
+    app.authCredentials = { username: 'new-user', password: 'password123' };
+    app.submitAuth({ invalid: false } as NgForm);
+
+    const request = http.expectOne('/EmployeeService/api/auth/register');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({
+      username: 'new-user',
+      password: 'password123',
+    });
+    expect(request.request.withCredentials).toBe(true);
+    request.flush({ message: 'Account created.', username: 'new-user' });
+    fixture.detectChanges();
+
+    expect(app.authMode).toBe('login');
+    expect(app.authSuccessMessage).toBe('Account created.');
+  });
+
+  it('should verify the session after login before opening home', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne('/EmployeeService/api/auth/session').flush({
+      authenticated: false,
+      username: null,
+    });
+    fixture.detectChanges();
+
+    const app = fixture.componentInstance;
+    app.authCredentials = { username: 'test-user', password: 'password123' };
+    app.submitAuth({ invalid: false } as NgForm);
+
+    const loginRequest = http.expectOne('/EmployeeService/api/auth/login');
+    expect(loginRequest.request.method).toBe('POST');
+    expect(loginRequest.request.body).toEqual({
+      username: 'test-user',
+      password: 'password123',
+    });
+    loginRequest.flush({ message: 'Login successful.' });
+    const sessionRequest = http.expectOne('/EmployeeService/api/auth/session');
+    expect(sessionRequest.request.method).toBe('GET');
+    sessionRequest.flush({ authenticated: true, username: 'test-user' });
+    const employeesRequest = http.expectOne('/EmployeeService/getEmpDetails');
+    employeesRequest.flush([]);
+    fixture.detectChanges();
+
+    expect(app.authStatus).toBe('authenticated');
+  });
+
+  it('should return to login without making a logout request', () => {
+    const fixture = TestBed.createComponent(App);
+    initializeAuthenticatedApp(fixture).flush([]);
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    element.querySelector<HTMLButtonElement>('.account-bar button')!.click();
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.authStatus).toBe('unauthenticated');
+    expect(element.querySelector('h1')?.textContent).toContain(
+      'Welcome to BEC College Management System',
     );
+    expect(element.querySelector('.text-button')?.textContent).toContain(
+      'Create an account',
+    );
+    TestBed.inject(HttpTestingController).expectNone(
+      '/EmployeeService/api/auth/logout',
+    );
+  });
+
+  it('should show a helpful message and retry when employee service is unavailable', () => {
+    const fixture = TestBed.createComponent(App);
+    const request = initializeAuthenticatedApp(fixture);
     request.flush(
       { message: 'Bad Gateway' },
       { status: 502, statusText: 'Bad Gateway' },
@@ -144,10 +236,7 @@ describe('App', () => {
 
   it('should modify an employee with PUT and refresh the employee list', async () => {
     const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-    const initialRequest = TestBed.inject(HttpTestingController).expectOne(
-      '/EmployeeService/getEmpDetails',
-    );
+    const initialRequest = initializeAuthenticatedApp(fixture);
     initialRequest.flush([
       { departmentID: 1000, empId: 100, empName: 'Umesh Kanchigidad' },
     ]);
@@ -208,10 +297,7 @@ describe('App', () => {
 
   it('should delete an employee and immediately remove its row', async () => {
     const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-    const initialRequest = TestBed.inject(HttpTestingController).expectOne(
-      '/EmployeeService/getEmpDetails',
-    );
+    const initialRequest = initializeAuthenticatedApp(fixture);
     initialRequest.flush([
       { departmentID: 1000, empId: 100, empName: 'Umesh' },
       { departmentID: 1001, empId: 101, empName: 'Aishwarya' },

@@ -22,6 +22,250 @@
   margin-bottom: 2rem;
 }
 
+.auth-card {
+  width: min(100%, 30rem);
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 70%);
+  border-top: 5px solid #f59e0b;
+  background: rgb(255 255 255 / 96%);
+  box-shadow: 0 1.75rem 5rem rgb(25 42 86 / 20%);
+  animation: card-arrive 450ms ease-out both;
+}
+
+.auth-page {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  align-content: center;
+  background:
+    radial-gradient(ellipse at 12% 18%, rgb(251 191 36 / 40%), transparent 32%),
+    radial-gradient(ellipse at 90% 82%, rgb(45 212 191 / 32%), transparent 34%),
+    linear-gradient(135deg, #102a56 0%, #174ea6 52%, #087e8b 100%);
+}
+
+.auth-page::before,
+.auth-page::after,
+.home-page::before,
+.home-page::after {
+  position: absolute;
+  z-index: -1;
+  width: 18rem;
+  height: 18rem;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 50%;
+  content: '';
+}
+
+.auth-page::before {
+  top: -8rem;
+  right: -4rem;
+  box-shadow: 0 0 0 2.5rem rgb(255 255 255 / 5%), 0 0 0 5rem rgb(255 255 255 / 4%);
+}
+
+.auth-page::after {
+  bottom: -11rem;
+  left: -5rem;
+  width: 24rem;
+  height: 24rem;
+  box-shadow: 0 0 0 2.5rem rgb(255 255 255 / 5%);
+}
+
+.home-page {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 8% 12%, rgb(255 199 92 / 88%), transparent 27%),
+    radial-gradient(ellipse at 94% 16%, rgb(95 223 198 / 80%), transparent 30%),
+    radial-gradient(ellipse at 76% 98%, rgb(157 139 255 / 65%), transparent 34%),
+    linear-gradient(135deg, #eaf5ff 0%, #dff8ef 46%, #fff2d9 100%);
+}
+
+.home-page::before {
+  top: -11rem;
+  right: 12%;
+  width: 21rem;
+  height: 21rem;
+  border-color: rgb(255 255 255 / 42%);
+  box-shadow:
+    0 0 0 2.5rem rgb(255 255 255 / 18%),
+    0 0 0 5rem rgb(255 255 255 / 12%);
+}
+
+.home-page::after {
+  bottom: -13rem;
+  left: 8%;
+  width: 27rem;
+  height: 27rem;
+  border-color: rgb(255 255 255 / 35%);
+  box-shadow: 0 0 0 3rem rgb(255 255 255 / 14%);
+}
+
+.auth-card .card-header {
+  margin-bottom: 1.5rem;
+}
+
+.auth-card .eyebrow {
+  display: inline-block;
+  margin-bottom: 1rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  background: #e8f3ff;
+  color: #1551a1;
+  font-size: 0.68rem;
+}
+
+.auth-card h1 {
+  max-width: 24rem;
+  color: #132d54;
+  font-size: clamp(1.8rem, 5vw, 2.25rem);
+  line-height: 1.15;
+}
+
+.auth-card .intro {
+  color: #5e6f87;
+}
+
+.auth-card label {
+  color: #263d5d;
+}
+
+.auth-card input {
+  border-color: #d7e1ef;
+  background: #f9fbfe;
+}
+
+.auth-card input:focus {
+  border-color: #1580a5;
+  outline-color: rgb(21 128 165 / 18%);
+  background: #fff;
+}
+
+.auth-card form button[type='submit'] {
+  margin-top: 0.8rem;
+  background: linear-gradient(100deg, #174ea6, #087e8b);
+  box-shadow: 0 0.5rem 1rem rgb(23 78 166 / 22%);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.auth-card form button[type='submit']:hover:not(:disabled) {
+  background: linear-gradient(100deg, #123f8a, #066b75);
+  box-shadow: 0 0.7rem 1.2rem rgb(23 78 166 / 30%);
+  transform: translateY(-1px);
+}
+
+.auth-card form button[type='submit']:disabled {
+  background: #90a9cc;
+  box-shadow: none;
+}
+
+@keyframes card-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(0.75rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.account-bar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0;
+  color: #657187;
+  font-size: 0.9rem;
+}
+
+.home-header {
+  position: relative;
+  min-height: 2.5rem;
+  margin-bottom: 0;
+  padding-top: 0;
+}
+
+.home-dashboard {
+  border-color: #dce8f4;
+  background:
+    radial-gradient(ellipse at 92% 9%, rgb(255 207 112 / 16%), transparent 26%),
+    #fff;
+}
+
+.home-hero {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-items: center;
+  margin: 0 0 2rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  overflow: hidden;
+  border: 1px solid #dcecf2;
+  border-radius: 1rem;
+  background: linear-gradient(115deg, #f1f8ff 0%, #f0fbf8 58%, #fff8e9 100%);
+}
+
+.home-hero .eyebrow {
+  display: inline-block;
+  margin-bottom: 1rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  background: #e4f2ff;
+  color: #1551a1;
+  font-size: 0.68rem;
+}
+
+.home-hero h1 {
+  color: #17335d;
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  line-height: 1.1;
+}
+
+.home-hero .intro {
+  max-width: 24rem;
+  color: #5e6f87;
+  font-size: 1.05rem;
+}
+
+.home-dashboard .tabs {
+  border: 1px solid #e1eaf2;
+  background: #f3f7fb;
+}
+
+.home-dashboard button.tab {
+  transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.account-bar strong {
+  color: #344054;
+}
+
+.auth-switch {
+  margin: 1rem 0 0;
+  color: #657187;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+button.tab.text-button {
+  min-height: auto;
+  padding: 0;
+  color: #1551a1;
+  font-weight: 700;
+}
+
+button.tab.text-button:hover:not(:disabled) {
+  background: transparent;
+  color: #087e8b;
+  text-decoration: underline;
+}
+
+
+
 .eyebrow {
   margin: 0 0 0.75rem;
   color: #2563eb;
@@ -265,6 +509,10 @@ tbody tr:last-child td {
 
   .card {
     padding: 1.25rem;
+  }
+
+  .home-hero {
+    margin-bottom: 1.5rem;
   }
 
   .results-table-wrap {

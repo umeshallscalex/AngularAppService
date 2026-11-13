@@ -1,1 +1,28 @@
 /* You can add global styles to this file, and also import other style files */
+.home-dashboard nav.tabs button.tab:nth-child(1):hover:not(:disabled),
+.home-dashboard nav.tabs button.tab:nth-child(1).active {
+  background: #dbeafe;
+  color: #1e40af;
+  box-shadow: inset 0 0 0 1px #bfdbfe;
+}
+
+.home-dashboard nav.tabs button.tab:nth-child(2):hover:not(:disabled),
+.home-dashboard nav.tabs button.tab:nth-child(2).active {
+  background: #ccfbf1;
+  color: #0f766e;
+  box-shadow: inset 0 0 0 1px #99f6e4;
+}
+
+.home-dashboard nav.tabs button.tab:nth-child(3):hover:not(:disabled),
+.home-dashboard nav.tabs button.tab:nth-child(3).active {
+  background: #ede9fe;
+  color: #6d28d9;
+  box-shadow: inset 0 0 0 1px #ddd6fe;
+}
+
+.home-dashboard nav.tabs button.tab:nth-child(4):hover:not(:disabled),
+.home-dashboard nav.tabs button.tab:nth-child(4).active {
+  background: #ffedd5;
+  color: #c2410c;
+  box-shadow: inset 0 0 0 1px #fed7aa;
+}
